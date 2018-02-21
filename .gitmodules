@@ -1,3 +1,6 @@
 [submodule "modules/python-nokia"]
 	path = modules/python-nokia
 	url = https://github.com/orcasgit/python-nokia.git
+[submodule "modules/withings-garmin-v2"]
+	path = modules/withings-garmin-v2
+	url = https://github.com/jaroslawhartman/withings-garmin-v2.git
