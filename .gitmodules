@@ -1,0 +1,3 @@
+[submodule "modules/python-nokia"]
+	path = modules/python-nokia
+	url = https://github.com/orcasgit/python-nokia.git
