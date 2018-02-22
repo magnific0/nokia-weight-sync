@@ -60,6 +60,11 @@ def read_config( options ):
             options.garmin_username = config.get('garmin', 'username')
         if options.garmin_password is None and config.has_option('garmin', 'password'):
             options.garmin_password = base64.b64decode(config.get('garmin', 'password').encode('ascii')).decode('ascii')
+            
+    # Read GC password from console now
+    if options.garmin_username and options.garmin_password is None:
+        options.garmin_password = getpass.getpass('Please enter your Garmin Connect password: ')
+            
     if config.has_section('sync'):
         if config.has_option('sync', 'last'):
             options.last_sync = config.get('sync', 'last')
@@ -107,9 +112,7 @@ def save_config( options ):
     config.set('nokia', 'user_id', options.user_id)
     
     # Garmin Connect options
-    if options.garmin_username is not None:        
-        if options.garmin_password is None:
-            options.garmin_password = getpass.getpass('Please enter your Garmin Connect password: ')
+    if options.garmin_username:
         config.add_section('garmin')
         config.set('garmin', 'username', options.garmin_username)
         config.set('garmin', 'password', base64.b64encode(options.garmin_password.encode('ascii')).decode('ascii'))
@@ -126,10 +129,8 @@ def save_config( options ):
 
 if command == 'userinfo':
     print(client.get_user())
-    sys.exit(0)
 
-
-if command == 'last':
+elif command == 'last':
     m = client.get_measures(limit=1)[0]
     
     print(m.date)
@@ -139,12 +140,9 @@ if command == 'last':
                 print(m.get_measure(t))
     else:
         for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
-            print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))            
-    
-    sys.exit(0)
+            print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
 
-if command == 'synclast':
-    
+elif command == 'synclast':    
     # Get weight as before    
     m = client.get_measures(limit=1)[0]
     
@@ -167,10 +165,11 @@ if command == 'synclast':
     options.last_run  = str(time.time())
         
     # Do not repeatidly sync the same value
-    if m.date.timestamp == int(options.last_sync):
-        print('Last measurement was already synced')
-        save_config( options )
-        sys.exit(0)
+    if options.last_sync:
+        if m.date.timestamp == int(options.last_sync):
+            print('Last measurement was already synced')
+            save_config( options )
+            sys.exit(0)
     
     garmin = GarminConnect()
     session = garmin.login(options.garmin_username, options.garmin_password)
@@ -178,33 +177,31 @@ if command == 'synclast':
     if r:
         print('FIT has been successfully uploaded to Garmin!\n')
         options.last_sync = str(m.date.timestamp)
-        
-    save_config( options )
-    sys.exit(0)
 
-
-if command == 'subscribe':
+elif command == 'subscribe':
     client.subscribe(args[0], args[1])
     print("Subscribed %s" % args[0])
-    sys.exit(0)
 
-
-if command == 'unsubscribe':
+elif command == 'unsubscribe':
     client.unsubscribe(args[0])
     print("Unsubscribed %s" % args[0])
-    sys.exit(0)
 
-
-if command == 'list_subscriptions':
+elif command == 'list_subscriptions':
     l = client.list_subscriptions()
     if len(l) > 0:
         for s in l:
             print(" - %s " % s['comment'])
     else:
         print("No subscriptions")
-    sys.exit(0)
+        
+else:
+    
+    print("Unknown command")
+    print("Available commands: saveconfig, userinfo, last, synclast, subscribe, unsubscribe, list_subscriptions")
+    sys.exit(1)        
+
+save_config( options )
+sys.exit(0)
 
 
-print("Unknown command")
-print("Available commands: saveconfig, userinfo, last, synclast, subscribe, unsubscribe, list_subscriptions")
-sys.exit(1)
+
