@@ -5,11 +5,32 @@ Get weight from Nokia Health update in Garmin Connect
 
 ## Installation
 
-TODO
+1. Download / clone the repository.
+
+2. Satisfy the following requirements:
+
+    - Python 3.X
+    - Python libraries: arrow, requests, requests-oauthlib
+    
+3. [Register](https://developer.health.nokia.com/partner/add) an application with Nokia Health and obtain a consumer key and secret.
 
 ## Usage
 
-TODO
+1. On first run you need to set-up your Nokia Health consumer key and secret:
+
+        ./nokia-to-garmin-weight.py -k CONSUMER_KEY -s CONSUMER_SECRET last
+        
+2. Following the instructions and enter your oauth_verifier.
+
+3. Verify that your last measurement group is being displayed and your Nokia credentials are saved to ```config.ini```.
+
+4. Now register your Garmin Connect credentials and sync your last measurement (provide GC password when asked):
+
+        ./nokia-to-garmin-weight.py -g user@example.com synclast
+        
+5. Repeate synchronization when new measurements are made:
+
+        ./nokia-to-garmin-weight.py synclast
 
 ## Notice
 
