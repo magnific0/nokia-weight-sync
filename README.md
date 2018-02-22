@@ -31,6 +31,12 @@ Get weight from Nokia Health update in Garmin Connect
 5. Repeate synchronization when new measurements are made:
 
         ./nokia-to-garmin-weight.py synclast
+        
+**Important** both Nokia Health API credentials and Garmin Connect credentials are stored in ```config.ini```. If this file is compromised your entire Garmin account and personal health data from both providers are at risk.
+        
+## Advanced
+
+See ```./nokia-to-garmin-weight.py --help``` for more information.
 
 ## Notice
 
