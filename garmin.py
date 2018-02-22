@@ -2,8 +2,7 @@
 
 from sessioncache import SessionCache
 from datetime import datetime, timedelta
-import urllib2
-import urllib
+import urllib.request
 import datetime
 import requests
 import re
@@ -25,12 +24,12 @@ class GarminConnect(object):
     
     def create_opener(self, cookie):
         this = self
-        class _HTTPRedirectHandler(urllib2.HTTPRedirectHandler):
+        class _HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             def http_error_302(self, req, fp, code, msg, headers):
                 if req.get_full_url() == this.LOGIN_URL:
                     raise LoginSucceeded
-                return urllib2.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
-        return urllib2.build_opener(_HTTPRedirectHandler, urllib2.HTTPCookieProcessor(cookie))            
+                return urllib.request.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
+        return urllib.request.build_opener(_HTTPRedirectHandler, urllib.request.HTTPCookieProcessor(cookie))            
         
     ##############################################
     # From https://github.com/cpfair/tapiriik
@@ -125,10 +124,10 @@ class GarminConnect(object):
         return session  
 
     def print_cookies(self, cookies):
-            print "Cookies"
+            print("Cookies")
             
             for key, value in cookies.items():
-                print "Key: " + key + ", " + value
+                print("Key: " + key + ", " + value)
 
     def login(self, username, password):
 
@@ -155,7 +154,7 @@ class GarminConnect(object):
             if(res.status_code == 204):   # HTTP result 204 - "no content"
                 sys.stderr.write('No data to upload, try to use --fromdate and --todate\n')
             else:
-                print "Bad response during GC upload: " + str(res.status_code)
+                print("Bad response during GC upload: " + str(res.status_code))
                 raise APIException("Bad response during GC upload: %s %s" % (res.status_code, res.text))
 
         return (res.status_code == 200 or res.status_code == 201 or res.status_code == 204)
