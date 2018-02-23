@@ -20,7 +20,23 @@ import getpass
 import base64
 
 # Do command processing
-parser = OptionParser()
+class MyParser(OptionParser):
+    def format_epilog(self, formatter):
+        return self.epilog
+
+usage = "usage: %prog [options] command [service]"
+epilog = """
+Commands: 
+  setup, sync, last, userinfo, subscribe, unsubscribe, list_subscriptions
+
+Services: 
+  nokia, garmin, smashrun
+
+Copyright (c) 2018 by Jacco Geul <jacco@geul.net>
+Licensed under GNU General Public License 3.0 <https://github.com/magnific0/nokia-weight-sync/LICENSE>
+"""
+parser = MyParser(usage=usage,epilog=epilog,version=__version__)
+
 parser.add_option('-k', '--key', dest='key', help="Key/Username")
 parser.add_option('-s', '--secret', dest='secret', help="Secret/Password")
 parser.add_option('-c', '--config', dest='config', default='config.ini', help="Config file")
