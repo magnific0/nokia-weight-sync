@@ -41,7 +41,7 @@ Get weight from Nokia Health update to Garmin Connect or Smashrun.
         ./nokia-weight-sync.py sync garmin
         ./nokia-weight-sync.py sync smashrun
         
-**Important** both Nokia Health API, Smashrun API, and Garmin Connect credentials are stored in ```config.ini```. If this file is compromised your entire Garmin account and personal health data from both providers are at risk.
+**Important** Nokia Health API, Smashrun API, and Garmin Connect credentials are stored in ```config.ini```. If this file is compromised your Garmin Connect account, personal health data from Nokia Health, and activity data from Smashrun are at risk.
         
 ## Advanced
 
