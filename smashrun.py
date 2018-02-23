@@ -173,9 +173,12 @@ class Smashrun(object):
         url = self._build_url('my', 'body', 'weight')
         data = {'weightInKilograms': weight}
         if date:
-            if not date.is_aware():
-                raise ValueError("provided date is not timezone aware")
-            data.update(date=date.isoformat())
+            if isinstance(date,str):
+                data.update(date=date)
+            else:
+                if not date.is_aware():
+                    raise ValueError("provided date is not timezone aware")
+                data.update(date=date.isoformat())
         headers = {'Content-Type': 'application/json; charset=utf8'}
         r = self.session.post(url, data=json.dumps(data), headers=headers)
         r.raise_for_status()

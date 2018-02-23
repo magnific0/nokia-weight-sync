@@ -1,7 +1,7 @@
-# nokia-to-garmin-weight
-Get weight from Nokia Health update in Garmin Connect
+# nokia-weight-sync
+Get weight from Nokia Health update to Garmin Connect or Smashrun.
 
-![nokia-to-garmin-weight-logo](logo.png)
+![nokia-weight-sync-logo](logo.png)
 
 ## Installation
 
@@ -18,29 +18,38 @@ Get weight from Nokia Health update in Garmin Connect
 
 1. On first run you need to set-up your Nokia Health consumer key and secret:
 
-        ./nokia-to-garmin-weight.py -k CONSUMER_KEY -s CONSUMER_SECRET last
+        ./nokia-weight-sync.py -k CONSUMER_KEY -s CONSUMER_SECRET setup nokia
         
 2. Following the instructions and enter your oauth_verifier.
 
 3. Verify that your last measurement group is being displayed and your Nokia credentials are saved to ```config.ini```.
 
-4. Now register your Garmin Connect credentials and sync your last measurement (provide GC password when asked):
+4. Register one or more destination services:
 
-        ./nokia-to-garmin-weight.py -g user@example.com synclast
-        
-5. Repeate synchronization when new measurements are made:
+    - Register your Garmin Connect credentials and sync your last measurement (provide GC password when asked):
 
-        ./nokia-to-garmin-weight.py synclast
+            ./nokia-weight-sync.py -k user@example.com setup garmin
+            
+    - Register your Smashrun API key and following the authorization process:
+    
+            ./nokia-weight-sync.py -k CLIENT_ID -s CLIENT_SECRET setup smashrun
+            
+5. Verify that the relevant sections for the services are added to ```config.ini```.
         
-**Important** both Nokia Health API credentials and Garmin Connect credentials are stored in ```config.ini```. If this file is compromised your entire Garmin account and personal health data from both providers are at risk.
+6. Synchronize (new) measurements:
+
+        ./nokia-weight-sync.py sync garmin
+        ./nokia-weight-sync.py sync smashrun
+        
+**Important** both Nokia Health API, Smashrun API, and Garmin Connect credentials are stored in ```config.ini```. If this file is compromised your entire Garmin account and personal health data from both providers are at risk.
         
 ## Advanced
 
-See ```./nokia-to-garmin-weight.py --help``` for more information.
+See ```./nokia-weight-sync.py --help``` for more information.
 
 ## Notice
 
-nokia-to-garmin-weight includes components the following open-source projects:
+nokia-weight-sync includes components the following open-source projects:
 
 * ```fit.py``` from [ikasamah/withings-garmin](https://github.com/ikasamah/withings-garmin), MIT License (c) 2013 Masayuki Hamasaki, adapted for Python 3.
 * ```garmin.py``` from [jaroslawhartman/withings-garmin-v2](https://github.com/jaroslawhartman/withings-garmin-v2), MIT License (c) 2013 Masayuki Hamasaki, adapted for Python 3.
@@ -50,8 +59,8 @@ nokia-to-garmin-weight includes components the following open-source projects:
 
 ## Support
 
-Please [open an issue](https://github.com/magnific0/nokia-to-garmin-weight/issues/new) for support.
+Please [open an issue](https://github.com/magnific0/nokia-weight-sync/issues/new) for support.
 
 ## Contributing
 
-Please contribute using [Github Flow](https://guides.github.com/introduction/flow/). Create a branch, add commits, and [open a pull request](https://github.com/magnific0/nokia-to-garmin-weight/compare/).
+Please contribute using [Github Flow](https://guides.github.com/introduction/flow/). Create a branch, add commits, and [open a pull request](https://github.com/magnific0/nokia-weight-sync/compare/).
