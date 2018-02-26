@@ -26,13 +26,17 @@ Get weight from Nokia Health update to Garmin Connect or Smashrun.
 
 4. Register one or more destination services:
 
-    - Register your Garmin Connect credentials and sync your last measurement (provide GC password when asked):
+    - **Garmin Connect:** register your Garmin Connect credentials and sync your last measurement (provide GC password when asked):
 
             ./nokia-weight-sync.py -k user@example.com setup garmin
             
-    - Register your Smashrun API key and following the authorization process:
+    - **Smashrun (implicit flow):** for user level authentication simply copy the access token (no registration, no refresh after expiry):
     
-            ./nokia-weight-sync.py -k CLIENT_ID -s CLIENT_SECRET setup smashrun
+            ./nokia-weight-sync.py setup smashrun
+            
+    - **Smashrun (code flow):** register Smashrun API application keys and follow the authorization process to obtain your users refresh_token ([registration required](https://api.smashrun.com/register), refresh after expiry):
+    
+            ./nokia-weight-sync.py -k CLIENT_ID -s CLIENT_SECRET setup smashrun_code
             
 5. Verify that the relevant sections for the services are added to ```config.ini```.
         

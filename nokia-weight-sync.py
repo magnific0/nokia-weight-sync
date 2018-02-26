@@ -12,6 +12,8 @@ import configparser
 from fit import FitEncoder_Weight
 from garmin import GarminConnect
 from smashrun import Smashrun
+from oauthlib.oauth2 import MobileApplicationClient
+import urllib.parse
 import nokia
 import os.path
 import sys
@@ -30,7 +32,7 @@ Commands:
   setup, sync, last, userinfo, subscribe, unsubscribe, list_subscriptions
 
 Services: 
-  nokia, garmin, smashrun
+  nokia, garmin, smashrun, smashrun_code (setup only)
 
 Copyright (c) 2018 by Jacco Geul <jacco@geul.net>
 Licensed under GNU General Public License 3.0 <https://github.com/magnific0/nokia-weight-sync/LICENSE>
@@ -58,8 +60,9 @@ if config.has_section('garmin'):
     if config.has_option('garmin', 'password'):
         config.set('garmin', 'password', base64.b64decode(config.get('garmin', 'password').encode('ascii')).decode('ascii'))
 
-def setup_nokia( options, config ):   
-           
+def setup_nokia( options, config ): 
+    """ Setup the Nokia Health API
+    """           
     if options.key is None:
         print("To set a connection with Nokia Health you must have registered an application at https://developer.health.nokia.com/en/partner/add .")
         options.key = input('Please enter the consumer key: ')
@@ -84,6 +87,8 @@ def setup_nokia( options, config ):
     config.set('nokia', 'user_id', creds.user_id)
 
 def setup_garmin( options, config ):
+    """ Setup the Garmin Connect credentials
+    """
     
     if options.key is None:
         options.key = input('Please enter your Garmin Connect username: ')
@@ -100,16 +105,30 @@ def setup_garmin( options, config ):
         
     config.set('garmin', 'username', options.key)
     config.set('garmin', 'password', options.secret)
-
-def setup_smashrun( options, config ):
     
+def setup_smashrun( options, config ):
+    """ Setup Smashrun API implicit user level authentication
+    """    
+    mobile = MobileApplicationClient('client') # implicit flow
+    client = Smashrun(client_id='client',client=mobile,client_secret='my_secret',redirect_uri='https://httpbin.org/get')
+    auth_url = client.get_auth_url()
+    print("Go to '%s' and log into Smashrun. After redirection, copy the access_token from the url." % auth_url[0])
+    print("Example url: https://httpbin.org/get#access_token=____01234-abcdefghijklmnopABCDEFGHIJLMNOP01234567890&token_type=[...]")
+    print("Example access_token: ____01234-abcdefghijklmnopABCDEFGHIJLMNOP01234567890")
+    token = input("Please enter your access token: " )
+    config.set('smashrun', 'token', urllib.parse.unquote(token))
+    config.set('smashrun', 'type', 'implicit')
+
+def setup_smashrun_code( options, config ):
+    """ Setup Smashrun API explicit code flow (for applications)
+    """
     if options.key is None:
         print("To set a connection with Smashrun you need to request an API key at https://api.smashrun.com/register .")
         options.key = input('Please the client id: ')
         
     if options.secret is None:
         options.secret = input('Please enter the client secret: ')
-        
+    
     client = Smashrun(client_id=options.key,client_secret=options.secret,redirect_uri='urn:ietf:wg:oauth:2.0:auto')
     auth_url = client.get_auth_url()
     print("Go to '%s' and authorize this application." % auth_url[0])
@@ -122,9 +141,12 @@ def setup_smashrun( options, config ):
     config.set('smashrun', 'client_id', options.key)
     config.set('smashrun', 'client_secret', options.secret)
     config.set('smashrun', 'refresh_token', resp['refresh_token'])
+    config.set('smashrun', 'type', 'code')
     
 
 def auth_nokia( config ):
+    """ Authenticate client with Nokia Health
+    """
     creds = nokia.NokiaCredentials(config.get('nokia', 'access_token'), config.get('nokia', 'access_token_secret'),
                                    config.get('nokia', 'consumer_key'), config.get('nokia', 'consumer_secret'),
                                    config.get('nokia', 'user_id'))
@@ -132,22 +154,27 @@ def auth_nokia( config ):
     return client
 
 def auth_smashrun( config ):
+    """ Authenticate client with Smashrun 
+    """
     
-    client = Smashrun(client_id=config.get('smashrun', 'client_id'), 
-                      client_secret=config.get('smashrun', 'client_secret'))
-    client.refresh_token(refresh_token=config.get('smashrun', 'refresh_token'))
+    if config.get('smashrun', 'type') == 'code':
+        client = Smashrun(client_id=config.get('smashrun', 'client_id'), 
+                        client_secret=config.get('smashrun', 'client_secret'))
+        client.refresh_token(refresh_token=config.get('smashrun', 'refresh_token'))        
+    else:
+        mobile = MobileApplicationClient('client') # implicit flow
+        client = Smashrun(client_id='client', client=mobile,
+                        token={'access_token':config.get('smashrun', 'token'),'token_type':'Bearer'})
     return client
 
-    
 client_nokia = auth_nokia( config )
-
 
 if command == 'setup':   
   
     if len(args) == 1:
         service = args[0]
     else:
-        print("You must provide the name of the service to setup. Available services are: nokia, garmin, smashrun.")
+        print("You must provide the name of the service to setup. Available services are: nokia, garmin, smashrun, smashrun_code.")
         sys.exit(1)
         
     if service == 'nokia':
@@ -156,8 +183,10 @@ if command == 'setup':
         setup_garmin( options, config )
     elif service == 'smashrun':
         setup_smashrun( options, config )
+    elif service == 'smashrun_code':
+        setup_smashrun_code( options, config )
     else:
-        print('Unknown service (%s), available services are: nokia, garmin, smashrun.')
+        print('Unknown service (%s), available services are: nokia, garmin, smashrun, smashrun_code.')
         sys.exit(1)
 
 elif command == 'userinfo':
