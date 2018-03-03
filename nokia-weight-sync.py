@@ -70,7 +70,7 @@ def setup_nokia( options, config ):
     if options.secret is None:
         options.secret = input('Please enter the consumer secret: ')
         
-    auth = nokia.NokiaAuth(options.consumer_key, options.consumer_secret)
+    auth = nokia.NokiaAuth(options.key, options.secret)
     authorize_url = auth.get_authorize_url()
     print("Go to %s allow the app and authorize the application." % authorize_url)
     oauth_verifier = input('Please enter your oauth_verifier: ')
@@ -167,6 +167,9 @@ def auth_smashrun( config ):
                         token={'access_token':config.get('smashrun', 'token'),'token_type':'Bearer'})
     return client
 
+if command != 'setup':
+    client_nokia = auth_nokia( config )
+
 if command == 'setup':   
   
     if len(args) == 1:
@@ -186,10 +189,8 @@ if command == 'setup':
     else:
         print('Unknown service (%s), available services are: nokia, garmin, smashrun, smashrun_code.')
         sys.exit(1)
-else:
-    client_nokia = auth_nokia( config )
 
-if command == 'userinfo':
+elif command == 'userinfo':
     print(client_nokia.get_user())
 
 elif command == 'last':
