@@ -116,6 +116,8 @@ def setup_smashrun( options, config ):
     print("Example url: https://httpbin.org/get#access_token=____01234-abcdefghijklmnopABCDEFGHIJLMNOP01234567890&token_type=[...]")
     print("Example access_token: ____01234-abcdefghijklmnopABCDEFGHIJLMNOP01234567890")
     token = input("Please enter your access token: " )
+    if not config.has_section('smashrun'):
+        config.add_section('smashrun')
     config.set('smashrun', 'token', urllib.parse.unquote(token))
     config.set('smashrun', 'type', 'implicit')
 
