@@ -167,8 +167,6 @@ def auth_smashrun( config ):
                         token={'access_token':config.get('smashrun', 'token'),'token_type':'Bearer'})
     return client
 
-client_nokia = auth_nokia( config )
-
 if command == 'setup':   
   
     if len(args) == 1:
@@ -188,8 +186,10 @@ if command == 'setup':
     else:
         print('Unknown service (%s), available services are: nokia, garmin, smashrun, smashrun_code.')
         sys.exit(1)
+else:
+    client_nokia = auth_nokia( config )
 
-elif command == 'userinfo':
+if command == 'userinfo':
     print(client_nokia.get_user())
 
 elif command == 'last':
