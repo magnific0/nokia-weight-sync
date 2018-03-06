@@ -28,7 +28,7 @@ Get weight from Nokia Health and update to Garmin Connect or Smashrun.
 
             ./nokia-weight-sync.py -k user@example.com setup garmin
             
-    - **Smashrun (implicit flow):** for user level authentication simply copy the access token (no registration, no refresh after expiry):
+    - **Smashrun (implicit flow, recommended):** for user level authentication simply copy the access token (no registration, no refresh after expiry):
     
             ./nokia-weight-sync.py setup smashrun
             
