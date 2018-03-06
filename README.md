@@ -1,5 +1,5 @@
 # nokia-weight-sync
-Get weight from Nokia Health update to Garmin Connect or Smashrun.
+Get weight from Nokia Health and update to Garmin Connect or Smashrun.
 
 ![nokia-weight-sync-logo](logo.png)
 
