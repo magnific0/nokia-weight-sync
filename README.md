@@ -20,7 +20,7 @@ Get weight from Nokia Health and update to Garmin Connect or Smashrun.
 
         ./nokia-weight-sync.py -k CONSUMER_KEY -s CONSUMER_SECRET setup nokia
         
-2. Following the instructions, click allow and copy the your ```oauth_verifier``` back into the prompt.
+2. Following the instructions, click allow and copy your ```oauth_verifier``` back into the application.
 
 3. Register one or more destination services:
 
