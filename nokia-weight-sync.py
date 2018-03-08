@@ -206,6 +206,24 @@ elif command == 'last':
     else:
         for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
             print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
+            
+elif command == 'lastn':
+    if len(args) != 1:
+        print("You must supply the number of measurement groups to fetch.")
+        sys.exit(1)
+        
+    # Get n last measurements
+    mall = client_nokia.get_measures(limit=args[0])
+    
+    for n, m in enumerate(mall):
+        # Print clear header and date for each group
+        print("--Group %i" % n)
+        print(m.date)
+        
+        # Print all types one by one
+        for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
+            print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
+        print("")
 
 elif command == 'sync':    
     # Get weight as before    
