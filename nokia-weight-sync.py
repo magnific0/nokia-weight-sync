@@ -200,9 +200,8 @@ elif command == 'last':
     
     print(m.date)
     if len(args) == 1:
-        for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
-            if n == args[0]:
-                print(m.get_measure(t))
+        types = dict(nokia.NokiaMeasureGroup.MEASURE_TYPES)
+        print(m.get_measure(types[args[0]]))
     else:
         for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
             print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
@@ -225,13 +224,20 @@ elif command == 'lastn':
             print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
         print("")
 
-elif command == 'sync':    
-    # Get weight as before    
-    m = client_nokia.get_measures(limit=1)[0]
+elif command == 'sync':   
     
-    for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
-        if n == 'weight':
-            weight = m.get_measure(t)
+    # Max group to fetch
+    maxgroups = 5
+    
+    # Get weight as before
+    groups = client_nokia.get_measures(limit=maxgroups)
+    
+    for m in groups:    
+        types = dict(nokia.NokiaMeasureGroup.MEASURE_TYPES)
+        t = types['weight']
+        weight = m.get_measure(t)
+        if weight:
+            break
     
     print("Last weight from Nokia Health: %s kg taken at %s" % (weight, m.date))
     
