@@ -12,7 +12,7 @@ Get weight from Nokia Health and update to Garmin Connect or Smashrun.
     - Python 3.X
     - Python libraries: arrow, requests, requests-oauthlib
     
-3. [Register](https://developer.health.nokia.com/partner/add) an application with Nokia Health and obtain a consumer key and secret.
+3. [Register](https://account.health.nokia.com/partner/add_oauth2) an application with Nokia Health and obtain a consumer key and secret. The new OAuth2.0 requires you to have a callback url. This can be anything it is suggested to use the following: https://localhost. Ensure you use a ```https``` callback otherwise requests-oauthlib will complain it isn't.
 
 ## Usage
 

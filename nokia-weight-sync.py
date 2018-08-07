@@ -41,6 +41,7 @@ parser = MyParser(usage=usage,epilog=epilog,version=__version__)
 
 parser.add_option('-k', '--key', dest='key', help="Key/Username")
 parser.add_option('-s', '--secret', dest='secret', help="Secret/Password")
+parser.add_option('-u', '--callback', dest='callback', help="Callback/redirect URI")
 parser.add_option('-c', '--config', dest='config', default='config.ini', help="Config file")
 
 (options, args) = parser.parse_args()
@@ -64,17 +65,22 @@ def setup_nokia( options, config ):
     """ Setup the Nokia Health API
     """
     if options.key is None:
-        print("To set a connection with Nokia Health you must have registered an application at https://developer.health.nokia.com/en/partner/add .")
-        options.key = input('Please enter the consumer key: ')
+        print("To set a connection with Nokia Health you must have registered an application at https://account.health.nokia.com/partner/add_oauth2 .")
+        options.key = input('Please enter the client id: ')
 
     if options.secret is None:
         options.secret = input('Please enter the consumer secret: ')
+        
+    if options.callback is None:
+        options.callback = input('Please enter the callback uri known by Nokia: ')
 
-    auth = nokia.NokiaAuth(options.key, options.secret)
+    auth = nokia.NokiaAuth(options.key, options.secret, options.callback)
     authorize_url = auth.get_authorize_url()
+    print(authorize_url)
     print("Go to %s allow the app and authorize the application." % authorize_url)
-    oauth_verifier = input('Please enter your oauth_verifier: ')
-    creds = auth.get_credentials(oauth_verifier)
+    callback_url = input('Please enter your callback url: ')
+    # auth.extract_access_code(callback_url)
+    creds = auth.get_credentials(callback_url)
 
 
     if not config.has_section('nokia'):
@@ -82,8 +88,11 @@ def setup_nokia( options, config ):
 
     config.set('nokia', 'consumer_key', options.key)
     config.set('nokia', 'consumer_secret', options.secret)
+    config.set('nokia', 'callback_uri', options.callback)
     config.set('nokia', 'access_token', creds.access_token)
-    config.set('nokia', 'access_token_secret', creds.access_token_secret)
+    config.set('nokia', 'token_expiry', creds.token_expiry)
+    config.set('nokia', 'token_type', creds.token_type)
+    config.set('nokia', 'refresh_token', creds.refresh_token)
     config.set('nokia', 'user_id', creds.user_id)
 
 def setup_garmin( options, config ):
@@ -149,9 +158,14 @@ def setup_smashrun_code( options, config ):
 def auth_nokia( config ):
     """ Authenticate client with Nokia Health
     """
-    creds = nokia.NokiaCredentials(config.get('nokia', 'access_token'), config.get('nokia', 'access_token_secret'),
-                                   config.get('nokia', 'consumer_key'), config.get('nokia', 'consumer_secret'),
-                                   config.get('nokia', 'user_id'))
+    creds = nokia.NokiaCredentials(config.get('nokia', 'access_token'), 
+                                   config.get('nokia', 'token_expiry'),
+                                   config.get('nokia', 'token_type'),
+                                   config.get('nokia', 'refresh_token'),
+                                   config.get('nokia', 'user_id'),
+                                   config.get('nokia', 'consumer_key'),
+                                   config.get('nokia', 'consumer_secret')
+                                   )
     client = nokia.NokiaApi(creds)
     return client
 
@@ -169,6 +183,7 @@ def auth_smashrun( config ):
                         token={'access_token':config.get('smashrun', 'token'),'token_type':'Bearer'})
     return client
 
+client_nokia = None
 if command != 'setup':
     client_nokia = auth_nokia( config )
 
@@ -342,6 +357,13 @@ else:
     print("Available commands: setup, sync, sync-preview, last, userinfo, subscribe, unsubscribe, list_subscriptions")
     sys.exit(1)
 
+# If Nokia API client was used in this session, get the token (might have been refreshed
+if client_nokia:
+    creds = client_nokia.get_credentials()    
+    config.set('nokia', 'access_token', creds.access_token)
+    config.set('nokia', 'token_expiry', creds.token_expiry)
+    config.set('nokia', 'refresh_token', creds.refresh_token)
+    
 
 # Encode the Garmin password
 if config.has_section('garmin'):
