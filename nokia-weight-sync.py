@@ -224,43 +224,63 @@ elif command == 'lastn':
             print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
         print("")
 
+elif command == 'sync-preview':
+    if len(args) == 1:
+        service = args[0]
+    else:
+        print("You must provide the name of the service to sync. Available services are: garmin, smashrun.")
+        sys.exit(1)
+
+    # Get next measurements
+    last_sync = int(config.get(service,'last_sync')) if config.has_option(service, 'last_sync') else 0
+    mall = client_nokia.get_measures(lastupdate=last_sync)
+
+    for n, m in enumerate(mall):
+        # Print clear header and date for each group
+        print("--Group %i" % n)
+        print(m.date)
+
+        # Print all types one by one
+        for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
+            print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
+        print("")
+
 elif command == 'sync':   
-    
-    # Max group to fetch
-    maxgroups = 5
-    
-    # Get weight as before
-    groups = client_nokia.get_measures(limit=maxgroups)
-    
-    for m in groups:    
-        types = dict(nokia.NokiaMeasureGroup.MEASURE_TYPES)
-        t = types['weight']
-        weight = m.get_measure(t)
-        if weight:
-            break
-    
-    print("Last weight from Nokia Health: %s kg taken at %s" % (weight, m.date))
     
     if len(args) == 1:
         service = args[0]
     else:
-        print("You must provide the name of the service to setup. Available services are: nokia, garmin, smashrun.")
+        print("You must provide the name of the service to setup. Available services are: garmin, smashrun.")
         sys.exit(1)
-    
+ 
+    # Get next measurements
+    last_sync = int(config.get(service,'last_sync')) if config.has_option(service, 'last_sync') else 0
+    groups = client_nokia.get_measures(lastupdate=last_sync)
+    types = dict(nokia.NokiaMeasureGroup.MEASURE_TYPES)
+ 
+    if len(groups) == 0:
+        print("Their is no new measurement to sync.")
+        sys.exit(0);
+ 
     if service == 'garmin':
+
+        next_sync = groups[-1].date.timestamp
                 
         # Do not repeatidly sync the same value
-        if config.has_option('garmin', 'last_sync'):
-            if m.date.timestamp == int(config.get('garmin','last_sync')):
-                print('Last measurement was already synced')
-                sys.exit(0)
+        if next_sync == last_sync:
+            print('Last measurement was already synced')
+            sys.exit(0)
         
         # create fit file
         fit = FitEncoder_Weight()
         fit.write_file_info()
         fit.write_file_creator()
-        fit.write_device_info(timestamp=m.date.timestamp)
-        fit.write_weight_scale(timestamp=m.date.timestamp, weight=weight)
+        fit.write_device_info(timestamp=next_sync)
+        for m in groups:
+            weight = m.get_measure(types['weight']);
+            if weight:
+                fit.write_weight_scale(timestamp=m.date.timestamp, weight=weight, percent_fat=m.get_measure(types['fat_ratio']), 
+                    percent_hydration=m.get_measure(types['hydration']), bone_mass=m.get_measure(types['bone_mass']), muscle_mass=m.get_measure(types['muscle_mass']))
             
         fit.finish()           
         
@@ -268,10 +288,19 @@ elif command == 'sync':
         session = garmin.login(config.get('garmin','username'), config.get('garmin','password'))
         r = garmin.upload_file(fit.getvalue(), session)
         if r:
-            print('Weight has been successfully updated to Garmin!')
-            config.set('garmin','last_sync', str(m.date.timestamp))
+            print("%d weights has been successfully updated to Garmin!" % (len(groups)))
+            config.set('garmin','last_sync', str(next_sync))
             
     elif service == 'smashrun':
+
+        for m in groups:
+            t = types['weight']
+            weight = m.get_measure(t)
+            if weight:
+                break
+
+        print("Last weight from Nokia Health: %s kg taken at %s" % (weight, m.date))
+
                 
         # Do not repeatidly sync the same value
         if config.has_option('smashrun', 'last_sync'):
