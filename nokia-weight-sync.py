@@ -28,10 +28,10 @@ class MyParser(OptionParser):
 
 usage = "usage: %prog [options] command [service]"
 epilog = """
-Commands: 
+Commands:
   setup, sync, last, userinfo, subscribe, unsubscribe, list_subscriptions
 
-Services: 
+Services:
   nokia, garmin, smashrun, smashrun_code (setup only)
 
 Copyright (c) 2018 by Jacco Geul <jacco@geul.net>
@@ -49,7 +49,7 @@ if len(args) == 0:
     print("Missing command!")
     print("Available commands: setup, sync, last, userinfo, subscribe, unsubscribe, list_subscriptions")
     sys.exit(1)
-    
+
 command = args.pop(0)
 
 config = configparser.ConfigParser()
@@ -60,26 +60,26 @@ if config.has_section('garmin'):
     if config.has_option('garmin', 'password'):
         config.set('garmin', 'password', base64.b64decode(config.get('garmin', 'password').encode('ascii')).decode('ascii'))
 
-def setup_nokia( options, config ): 
+def setup_nokia( options, config ):
     """ Setup the Nokia Health API
-    """           
+    """
     if options.key is None:
         print("To set a connection with Nokia Health you must have registered an application at https://developer.health.nokia.com/en/partner/add .")
         options.key = input('Please enter the consumer key: ')
-        
+
     if options.secret is None:
         options.secret = input('Please enter the consumer secret: ')
-        
+
     auth = nokia.NokiaAuth(options.key, options.secret)
     authorize_url = auth.get_authorize_url()
     print("Go to %s allow the app and authorize the application." % authorize_url)
     oauth_verifier = input('Please enter your oauth_verifier: ')
     creds = auth.get_credentials(oauth_verifier)
-    
-    
+
+
     if not config.has_section('nokia'):
         config.add_section('nokia')
-    
+
     config.set('nokia', 'consumer_key', options.key)
     config.set('nokia', 'consumer_secret', options.secret)
     config.set('nokia', 'access_token', creds.access_token)
@@ -89,26 +89,26 @@ def setup_nokia( options, config ):
 def setup_garmin( options, config ):
     """ Setup the Garmin Connect credentials
     """
-    
+
     if options.key is None:
         options.key = input('Please enter your Garmin Connect username: ')
-        
+
     if options.secret is None:
         options.secret = getpass.getpass('Please enter your Garmin Connect password: ')
-        
+
     # Test out our new powers
     garmin = GarminConnect()
     session = garmin.login(options.key, options.secret)
-    
+
     if not config.has_section('garmin'):
         config.add_section('garmin')
-        
+
     config.set('garmin', 'username', options.key)
     config.set('garmin', 'password', options.secret)
-    
+
 def setup_smashrun( options, config ):
     """ Setup Smashrun API implicit user level authentication
-    """    
+    """
     mobile = MobileApplicationClient('client') # implicit flow
     client = Smashrun(client_id='client',client=mobile,client_secret='my_secret',redirect_uri='https://httpbin.org/get')
     auth_url = client.get_auth_url()
@@ -127,24 +127,24 @@ def setup_smashrun_code( options, config ):
     if options.key is None:
         print("To set a connection with Smashrun you need to request an API key at https://api.smashrun.com/register .")
         options.key = input('Please the client id: ')
-        
+
     if options.secret is None:
         options.secret = input('Please enter the client secret: ')
-    
+
     client = Smashrun(client_id=options.key,client_secret=options.secret,redirect_uri='urn:ietf:wg:oauth:2.0:auto')
     auth_url = client.get_auth_url()
     print("Go to '%s' and authorize this application." % auth_url[0])
     code = input('Please enter your the code provided: ')
     resp = client.fetch_token(code=code)
-    
+
     if not config.has_section('smashrun'):
         config.add_section('smashrun')
-    
+
     config.set('smashrun', 'client_id', options.key)
     config.set('smashrun', 'client_secret', options.secret)
     config.set('smashrun', 'refresh_token', resp['refresh_token'])
     config.set('smashrun', 'type', 'code')
-    
+
 
 def auth_nokia( config ):
     """ Authenticate client with Nokia Health
@@ -156,13 +156,13 @@ def auth_nokia( config ):
     return client
 
 def auth_smashrun( config ):
-    """ Authenticate client with Smashrun 
+    """ Authenticate client with Smashrun
     """
-    
+
     if config.get('smashrun', 'type') == 'code':
-        client = Smashrun(client_id=config.get('smashrun', 'client_id'), 
+        client = Smashrun(client_id=config.get('smashrun', 'client_id'),
                         client_secret=config.get('smashrun', 'client_secret'))
-        client.refresh_token(refresh_token=config.get('smashrun', 'refresh_token'))        
+        client.refresh_token(refresh_token=config.get('smashrun', 'refresh_token'))
     else:
         mobile = MobileApplicationClient('client') # implicit flow
         client = Smashrun(client_id='client', client=mobile,
@@ -172,14 +172,14 @@ def auth_smashrun( config ):
 if command != 'setup':
     client_nokia = auth_nokia( config )
 
-if command == 'setup':   
-  
+if command == 'setup':
+
     if len(args) == 1:
         service = args[0]
     else:
         print("You must provide the name of the service to setup. Available services are: nokia, garmin, smashrun, smashrun_code.")
         sys.exit(1)
-        
+
     if service == 'nokia':
         setup_nokia( options, config )
     elif service == 'garmin':
@@ -197,7 +197,7 @@ elif command == 'userinfo':
 
 elif command == 'last':
     m = client_nokia.get_measures(limit=1)[0]
-    
+
     print(m.date)
     if len(args) == 1:
         types = dict(nokia.NokiaMeasureGroup.MEASURE_TYPES)
@@ -205,20 +205,20 @@ elif command == 'last':
     else:
         for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
             print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
-            
+
 elif command == 'lastn':
     if len(args) != 1:
         print("You must supply the number of measurement groups to fetch.")
         sys.exit(1)
-        
+
     # Get n last measurements
     mall = client_nokia.get_measures(limit=args[0])
-    
+
     for n, m in enumerate(mall):
         # Print clear header and date for each group
         print("--Group %i" % n)
         print(m.date)
-        
+
         # Print all types one by one
         for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
             print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
@@ -245,32 +245,32 @@ elif command == 'sync-preview':
             print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
         print("")
 
-elif command == 'sync':   
-    
+elif command == 'sync':
+
     if len(args) == 1:
         service = args[0]
     else:
-        print("You must provide the name of the service to setup. Available services are: garmin, smashrun.")
+        print("You must provide the name of the service to sync. Available services are: garmin, smashrun.")
         sys.exit(1)
- 
+
     # Get next measurements
     last_sync = int(config.get(service,'last_sync')) if config.has_option(service, 'last_sync') else 0
     groups = client_nokia.get_measures(lastupdate=last_sync)
     types = dict(nokia.NokiaMeasureGroup.MEASURE_TYPES)
- 
+
     if len(groups) == 0:
         print("Their is no new measurement to sync.")
         sys.exit(0);
- 
+
     if service == 'garmin':
 
         next_sync = groups[-1].date.timestamp
-                
+
         # Do not repeatidly sync the same value
         if next_sync == last_sync:
             print('Last measurement was already synced')
             sys.exit(0)
-        
+
         # create fit file
         fit = FitEncoder_Weight()
         fit.write_file_info()
@@ -279,21 +279,21 @@ elif command == 'sync':
         for m in groups:
             weight = m.get_measure(types['weight']);
             if weight:
-                fit.write_weight_scale(timestamp=m.date.timestamp, weight=weight, percent_fat=m.get_measure(types['fat_ratio']), 
+                fit.write_weight_scale(timestamp=m.date.timestamp, weight=weight, percent_fat=m.get_measure(types['fat_ratio']),
                     percent_hydration=m.get_measure(types['hydration']), bone_mass=m.get_measure(types['bone_mass']), muscle_mass=m.get_measure(types['muscle_mass']))
-            
-        fit.finish()           
-        
+
+        fit.finish()
+
         garmin = GarminConnect()
         session = garmin.login(config.get('garmin','username'), config.get('garmin','password'))
         r = garmin.upload_file(fit.getvalue(), session)
         if r:
             print("%d weights has been successfully updated to Garmin!" % (len(groups)))
             config.set('garmin','last_sync', str(next_sync))
-            
+
     elif service == 'smashrun':
 
-        for m in groups:
+        for m in reversed(groups):
             t = types['weight']
             weight = m.get_measure(t)
             if weight:
@@ -301,21 +301,21 @@ elif command == 'sync':
 
         print("Last weight from Nokia Health: %s kg taken at %s" % (weight, m.date))
 
-                
+
         # Do not repeatidly sync the same value
         if config.has_option('smashrun', 'last_sync'):
             if m.date.timestamp == int(config.get('smashrun','last_sync')):
                 print('Last measurement was already synced')
                 sys.exit(0)
-        
+
         client_smashrun = auth_smashrun( config )
-        
+
         resp = client_smashrun.create_weight( weight, m.date.format('YYYY-MM-DD') )
-        
+
         if resp.status_code == 200:
             print('Weight has been successfully updated to Smashrun!')
             config.set('smashrun','last_sync', str(m.date.timestamp))
-        
+
     else:
         print('Unknown service (%s), available services are: nokia, garmin, smashrun')
         sys.exit(1)
@@ -335,13 +335,13 @@ elif command == 'list_subscriptions':
             print(" - %s " % s['comment'])
     else:
         print("No subscriptions")
-        
+
 else:
-    
+
     print("Unknown command")
-    print("Available commands: setup, sync, last, userinfo, subscribe, unsubscribe, list_subscriptions")
+    print("Available commands: setup, sync, sync-preview, last, userinfo, subscribe, unsubscribe, list_subscriptions")
     sys.exit(1)
-    
+
 
 # Encode the Garmin password
 if config.has_section('garmin'):
@@ -351,7 +351,7 @@ if config.has_section('garmin'):
 with open(options.config, 'w') as f:
     config.write(f)
     f.close()
-    
+
 print("Config file saved to %s" % options.config)
 
 sys.exit(0)
