@@ -72,13 +72,14 @@ def setup_nokia( options, config ):
         options.secret = input('Please enter the consumer secret: ')
         
     if options.callback is None:
-        options.callback = input('Please enter the callback uri known by Nokia: ')
+        options.callback = input('Please enter the callback url known by Nokia: ')
 
     auth = nokia.NokiaAuth(options.key, options.secret, options.callback)
     authorize_url = auth.get_authorize_url()
-    print(authorize_url)
-    print("Go to %s allow the app and authorize the application." % authorize_url)
-    callback_url = input('Please enter your callback url: ')
+    print("Visit: %s\nand select your user and click \"Allow this app\"." % authorize_url)
+    print("Afterwards you will be redirected to your callback url with some additional parameters.")
+    print("Example: https://your_original_callback?code=[code]&state=[state]")
+    callback_url = input('Please enter the full callback response url: ')
     # auth.extract_access_code(callback_url)
     creds = auth.get_credentials(callback_url)
 
