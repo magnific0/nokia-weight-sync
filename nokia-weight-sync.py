@@ -70,7 +70,7 @@ def setup_nokia( options, config ):
 
     if options.secret is None:
         options.secret = input('Please enter the consumer secret: ')
-        
+
     if options.callback is None:
         options.callback = input('Please enter the callback url known by Nokia: ')
 
@@ -155,11 +155,30 @@ def setup_smashrun_code( options, config ):
     config.set('smashrun', 'refresh_token', resp['refresh_token'])
     config.set('smashrun', 'type', 'code')
 
+def save_config():
+    # Encode the Garmin password
+    if config.has_section('garmin'):
+        if config.has_option('garmin', 'password'):
+            config.set('garmin', 'password', base64.b64encode( config.get('garmin', 'password').encode('ascii') ).decode('ascii'))
+
+    # New Nokia tokens (if refreshed)
+    if client_nokia:
+        creds = client_nokia.get_credentials()
+        if config.get('nokia', 'access_token') is not creds.access_token:
+            config.set('nokia', 'access_token', creds.access_token)
+            config.set('nokia', 'token_expiry', creds.token_expiry)
+            config.set('nokia', 'refresh_token', creds.refresh_token)
+
+    with open(options.config, 'w') as f:
+        config.write(f)
+        f.close()
+
+    print("Config file saved to %s" % options.config)
 
 def auth_nokia( config ):
     """ Authenticate client with Nokia Health
     """
-    creds = nokia.NokiaCredentials(config.get('nokia', 'access_token'), 
+    creds = nokia.NokiaCredentials(config.get('nokia', 'access_token'),
                                    config.get('nokia', 'token_expiry'),
                                    config.get('nokia', 'token_type'),
                                    config.get('nokia', 'refresh_token'),
@@ -276,6 +295,7 @@ elif command == 'sync':
 
     if len(groups) == 0:
         print("Their is no new measurement to sync.")
+        save_config()
         sys.exit(0);
 
     if service == 'garmin':
@@ -285,6 +305,7 @@ elif command == 'sync':
         # Do not repeatidly sync the same value
         if next_sync == last_sync:
             print('Last measurement was already synced')
+            save_config()
             sys.exit(0)
 
         # create fit file
@@ -322,6 +343,7 @@ elif command == 'sync':
         if config.has_option('smashrun', 'last_sync'):
             if m.date.timestamp == int(config.get('smashrun','last_sync')):
                 print('Last measurement was already synced')
+                save_config()
                 sys.exit(0)
 
         client_smashrun = auth_smashrun( config )
@@ -334,6 +356,7 @@ elif command == 'sync':
 
     else:
         print('Unknown service (%s), available services are: nokia, garmin, smashrun')
+        save_config()
         sys.exit(1)
 
 elif command == 'subscribe':
@@ -353,28 +376,9 @@ elif command == 'list_subscriptions':
         print("No subscriptions")
 
 else:
-
     print("Unknown command")
     print("Available commands: setup, sync, sync-preview, last, userinfo, subscribe, unsubscribe, list_subscriptions")
     sys.exit(1)
 
-# If Nokia API client was used in this session, get the token (might have been refreshed
-if client_nokia:
-    creds = client_nokia.get_credentials()    
-    config.set('nokia', 'access_token', creds.access_token)
-    config.set('nokia', 'token_expiry', creds.token_expiry)
-    config.set('nokia', 'refresh_token', creds.refresh_token)
-    
-
-# Encode the Garmin password
-if config.has_section('garmin'):
-    if config.has_option('garmin', 'password'):
-        config.set('garmin', 'password', base64.b64encode( config.get('garmin', 'password').encode('ascii') ).decode('ascii'))
-
-with open(options.config, 'w') as f:
-    config.write(f)
-    f.close()
-
-print("Config file saved to %s" % options.config)
-
+save_config()
 sys.exit(0)
