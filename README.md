@@ -12,7 +12,12 @@ Get weight from Nokia Health and update to Garmin Connect or Smashrun.
     - Python 3.X
     - Python libraries: arrow, requests, requests-oauthlib
     
-3. [Register](https://account.health.nokia.com/partner/add_oauth2) an application with Nokia Health and obtain a consumer key and secret. The new OAuth2.0 requires you to have a callback url. This can be anything it is suggested to use the following: https://localhost. Ensure you use a ```https``` callback otherwise requests-oauthlib will complain it isn't.
+3. [Register](https://account.health.nokia.com/partner/add_oauth2) an application with Nokia Health and obtain a consumer key and secret.
+    1. logo: the requirements are quite strict, [feel free to use this one](https://github.com/magnific0/nokia-weight-sync/blob/master/logo256w.png)
+    1. callback: you can pick anything, but if you want to do the automated authorization (you will be prompted for this), you need to pick the hostname/ip and port carefully. I use http://localhost:8087.
+        - localhost: I run nokia-weight-sync and do the authorization in the browser on the same device. This needs to be replaced by local or public ip/hostname if you run it on a server.
+        - 8087: a port that is free and not coincidentally used by other services. For a remote setup make sure the port is not firewalled.
+        - http: https is available, but requires additional setup of certificates. For localhost http is fine.
 
 ## Usage
 
@@ -20,7 +25,7 @@ Get weight from Nokia Health and update to Garmin Connect or Smashrun.
 
         ./nokia-weight-sync.py -k CONSUMER_KEY -s CONSUMER_SECRET setup nokia
         
-2. Following the instructions, click allow and copy your ```oauth_verifier``` back into the application.
+2. Following the instructions on the screen and verify the application.
 
 3. Register one or more destination services:
 
