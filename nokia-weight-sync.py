@@ -20,6 +20,21 @@ import sys
 import time
 import getpass
 import base64
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from urllib.parse import parse_qs, urlparse
+import ssl
+
+nokia_auth_code = None
+
+# Extremely basic HTTP server for handling authorization response
+class AuthorizationRepsponseHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        global nokia_auth_code
+        nokia_auth_code = parse_qs(urlparse(self.path).query).get('code', None)[0]
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write('<html><body><h1>Authorization successful!</h1></body></html>'.encode('utf-8'))
 
 # Do command processing
 class MyParser(OptionParser):
@@ -42,6 +57,7 @@ parser = MyParser(usage=usage,epilog=epilog,version=__version__)
 parser.add_option('-k', '--key', dest='key', help="Key/Username")
 parser.add_option('-s', '--secret', dest='secret', help="Secret/Password")
 parser.add_option('-u', '--callback', dest='callback', help="Callback/redirect URI")
+parser.add_option('-a', '--authorization-server', dest='auth_serv', action="store_true", default=None, help="Authorization server")
 parser.add_option('-c', '--config', dest='config', default='config.ini', help="Config file")
 
 (options, args) = parser.parse_args()
@@ -64,6 +80,7 @@ if config.has_section('garmin'):
 def setup_nokia( options, config ):
     """ Setup the Nokia Health API
     """
+    global nokia_auth_code
     if options.key is None:
         print("To set a connection with Nokia Health you must have registered an application at https://account.health.nokia.com/partner/add_oauth2 .")
         options.key = input('Please enter the client id: ')
@@ -74,15 +91,41 @@ def setup_nokia( options, config ):
     if options.callback is None:
         options.callback = input('Please enter the callback url known by Nokia: ')
 
+    if options.auth_serv is None:
+        auth_serv_resp = input('Spin up HTTP server to automate authorization? [y/n] : ')
+        if auth_serv_resp is 'y':
+            options.auth_serv = True
+        else:
+            options.auth_serv = False
+
+    if options.auth_serv:
+        callback_parts = urlparse(options.callback)
+        httpd_port = callback_parts.port
+        httpd_ssl = callback_parts.scheme == 'https'
+        if not httpd_port:
+            httpd_port = 443 if httpd_ssl else 80
+        certfile = None
+        if httpd_ssl and not certfile:
+            print("Your callback url is over https, but no certificate is present.")
+            print("Change the scheme to http (also over at Nokia!) or specify a certfile above.")
+            exit(0)
+
     auth = nokia.NokiaAuth(options.key, options.secret, options.callback)
     authorize_url = auth.get_authorize_url()
     print("Visit: %s\nand select your user and click \"Allow this app\"." % authorize_url)
-    print("Afterwards you will be redirected to your callback url with some additional parameters.")
-    print("Example: https://your_original_callback?code=[code]&state=[state]")
-    callback_url = input('Please enter the full callback response url: ')
-    # auth.extract_access_code(callback_url)
-    creds = auth.get_credentials(callback_url)
 
+    if options.auth_serv:
+        httpd = HTTPServer(('', httpd_port), AuthorizationRepsponseHandler)
+        if httpd_ssl:
+            httpd.socket = ssl.wrap_socket(httpd.socket, certfile=certfile, server_side=True)
+        httpd.socket.settimeout(100)
+        httpd.handle_request()
+    else:
+        print("After redirection to your callback url find the authorization code in the url.")
+        print("Example: https://your_original_callback?code=abcdef01234&state=XFZ")
+        print("         example value to copy: abcdef01234")
+        nokia_auth_code = input('Please enter the authorization code: ')
+    creds = auth.get_credentials(nokia_auth_code)
 
     if not config.has_section('nokia'):
         config.add_section('nokia')
