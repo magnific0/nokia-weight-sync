@@ -12,7 +12,7 @@ Get weight from Nokia Health and update to Garmin Connect or Smashrun.
     - Python 3.X
     - Python libraries: arrow, requests, requests-oauthlib
     
-3. [Register](https://account.health.nokia.com/partner/add_oauth2) an application with Nokia Health and obtain a consumer key and secret.
+3. [Register](https://account.withings.com/partner/add_oauth2) an application with Nokia Health and obtain a consumer key and secret.
     1. logo: the requirements are quite strict, [feel free to use this one](https://github.com/magnific0/nokia-weight-sync/blob/master/logo256w.png)
     1. callback: you can pick anything, but if you want to do the automated authorization (you will be prompted for this), you need to pick the hostname/ip and port carefully. For example http://localhost:8087.
         - localhost: if you run nokia-weight-sync and do the authorization in the browser on the same device. This needs to be replaced by local or public ip/hostname if you run it on a server.

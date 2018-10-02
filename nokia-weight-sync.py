@@ -82,7 +82,7 @@ def setup_nokia( options, config ):
     """
     global nokia_auth_code
     if options.key is None:
-        print("To set a connection with Nokia Health you must have registered an application at https://account.health.nokia.com/partner/add_oauth2 .")
+        print("To set a connection with Nokia Health you must have registered an application at https://account.withings.com/partner/add_oauth2 .")
         options.key = input('Please enter the client id: ')
 
     if options.secret is None:
