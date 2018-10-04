@@ -60,7 +60,7 @@ class NokiaCredentials(object):
 
 
 class NokiaAuth(object):
-    URL = 'https://account.withings.com/'
+    URL = 'https://account.withings.com'
 
     def __init__(self, client_id, consumer_secret, callback_uri,
                  scope='user.metrics'):
@@ -115,7 +115,7 @@ def ts():
 
 
 class NokiaApi(object):
-    URL = 'https://wbsapi.withings.net/'
+    URL = 'https://wbsapi.withings.net'
 
     def __init__(self, credentials):
         self.credentials = credentials
